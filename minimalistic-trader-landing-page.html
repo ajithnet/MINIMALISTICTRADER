@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimalistic Trader — Two Signals. One Target. Zero Guesswork.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0A0B0D;
+    --bg-1:#14161A;
+    --bg-2:#1C1F24;
+    --bg-3:#262A30;
+    --line:#2A2E35;
+    --orange:#FF8C2A;
+    --orange-dim:rgba(255,140,42,0.12);
+    --green:#3DDC84;
+    --red:#FF5C6C;
+    --text-0:#F5F6F7;
+    --text-1:#B3B8C2;
+    --text-2:#7A8089;
+    --font-display:'Poppins',sans-serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:linear-gradient(160deg,var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-0) 100%);
+    color:var(--text-0);
+    font-family:var(--font-body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(10,11,13,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:84px;}
+  .brand{display:flex;align-items:center;}
+  .brand-mark{width:42px;height:42px;flex:none;margin-right:14px;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.1;}
+  .brand-text .name{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:0.5px;}
+  .brand-text .name span{color:var(--orange);}
+  .brand-text .tag{font-size:10px;color:var(--text-2);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+  nav.links{display:flex;align-items:center;}
+  nav.links a{font-size:14px;color:var(--text-1);font-weight:500;transition:color .15s;margin-left:36px;}
+  nav.links a:first-child{margin-left:0;}
+  nav.links a:hover{color:var(--text-0);}
+  .nav-cta{
+    background:var(--orange);color:#0A0B0D;font-weight:700;font-size:13px;
+    padding:11px 22px;border-radius:8px;letter-spacing:0.3px;
+    display:inline-flex;align-items:center;
+    transition:transform .15s, box-shadow .15s;
+    white-space:nowrap;
+  }
+  .nav-cta span{margin-left:8px;}
+  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,140,42,0.28);}
+  .mobile-toggle{display:none;}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:88px 0 110px;}
+  .hero-grid{display:flex;align-items:center;}
+  .hero-grid > .hero-left{flex:1.05;margin-right:64px;min-width:0;}
+  .hero-grid > .panel{flex:0.95;min-width:0;}
+
+  .eyebrow{
+    display:inline-flex;align-items:center;
+    border:1px solid var(--line);background:var(--bg-2);
+    padding:8px 16px;border-radius:30px;font-size:12px;font-weight:600;
+    letter-spacing:1px;color:var(--text-1);margin-bottom:28px;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:10px;}
+  .eyebrow .pipe{color:var(--line);margin:0 10px;}
+  .eyebrow .hot{color:var(--orange);}
+
+  h1.display{
+    font-family:var(--font-display);font-weight:800;
+    font-size:64px;line-height:1.02;letter-spacing:-1px;
+    margin-bottom:22px;
+  }
+  h1.display .line2{color:var(--orange);}
+
+  .hero-sub{
+    font-family:var(--font-display);font-weight:500;font-size:15px;
+    letter-spacing:2.5px;color:var(--text-1);text-transform:uppercase;
+    margin-bottom:26px;
+  }
+  .hero-desc{font-size:16.5px;color:var(--text-1);max-width:540px;margin-bottom:36px;}
+  .hero-desc b{color:var(--text-0);font-weight:600;}
+
+  .stat-row{display:flex;max-width:560px;margin-bottom:40px;}
+  .stat-card{
+    background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+    padding:16px 16px 14px;flex:1;margin-right:14px;min-width:0;
+  }
+  .stat-card:last-child{margin-right:0;}
+  .stat-card .label{font-size:11px;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;}
+  .stat-card .value{font-family:var(--font-display);font-weight:700;font-size:22px;}
+  .stat-card .value.orange{color:var(--orange);}
+  .stat-card .value.green{color:var(--green);}
+
+  .cta-row{display:flex;flex-wrap:wrap;}
+  .cta-row > a{margin-right:14px;margin-bottom:14px;}
+  .btn-primary{
+    background:var(--orange);color:#0A0B0D;font-weight:700;font-size:15px;
+    padding:16px 30px;border-radius:9px;display:inline-flex;align-items:center;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .btn-primary span{margin-left:10px;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,140,42,0.3);}
+  .btn-secondary{
+    border:1px solid var(--line);color:var(--text-0);font-weight:600;font-size:15px;
+    padding:16px 28px;border-radius:9px;display:inline-flex;align-items:center;
+    transition:background .15s, border-color .15s;
+  }
+  .btn-secondary span{margin-left:10px;}
+  .btn-secondary:hover{background:var(--bg-2);border-color:#3A3F47;}
+
+  /* ---------- MOCKUP PANEL ---------- */
+  .panel{
+    background:var(--bg-1);border:1px solid var(--line);border-radius:16px;
+    padding:18px 18px 14px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6);
+  }
+  .panel-head{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11px;color:var(--text-2);letter-spacing:0.5px;margin-bottom:14px;
+    font-family:'Courier New',monospace;
+  }
+  .panel-head .live{display:flex;align-items:center;color:var(--green);}
+  .panel-head .live .d{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);margin-right:6px;}
+
+  .chart-box{
+    position:relative;height:300px;background:var(--bg-0);border-radius:10px;
+    border:1px solid var(--line);overflow:hidden;
+  }
+  .candles{position:absolute;bottom:36px;left:18px;right:18px;height:200px;display:flex;align-items:flex-end;z-index:1;}
+  .candle{width:11px;border-radius:2px;position:relative;margin-right:7px;}
+  .candle:last-child{margin-right:0;}
+  .candle .wick{position:absolute;left:50%;top:-10px;bottom:-10px;width:1px;background:inherit;opacity:0.55;transform:translateX(-50%);}
+  .g{background:var(--green);}
+  .r{background:var(--red);}
+
+  .target-line{
+    position:absolute;left:0;right:0;height:0;z-index:2;
+    border-top:2px dotted var(--green);
+  }
+  .target-line.sell{border-top-color:var(--red);}
+
+  .sig-tag{
+    position:absolute;font-family:var(--font-display);font-weight:700;font-size:11px;
+    padding:5px 10px;border-radius:6px;color:#0A0B0D;letter-spacing:0.3px;z-index:3;
+    box-shadow:0 6px 16px rgba(0,0,0,0.35);
+  }
+  .sig-tag.plus{background:var(--orange);}
+  .sig-tag.plain.buy{background:var(--green);}
+  .sig-tag.plain.sell{background:var(--red);}
+
+  .mini-table{
+    position:absolute;top:14px;right:14px;width:178px;z-index:4;
+    background:rgba(20,22,26,0.95);border:1px solid var(--line);border-radius:8px;
+    overflow:hidden;font-size:10px;
+  }
+  .mini-table .row{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--line);}
+  .mini-table .row:last-child{border-bottom:none;}
+  .mini-table .row.head{background:#121417;font-weight:700;letter-spacing:0.5px;color:var(--text-1);}
+  .mini-table .row span:last-child{color:var(--orange);font-weight:600;}
+
+  .panel-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-top:12px;padding:0 4px;}
+  .panel-foot .key{display:flex;}
+  .panel-foot .key span{display:flex;align-items:center;margin-right:14px;}
+  .panel-foot .key span:last-child{margin-right:0;}
+  .panel-foot .key i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px;}
+
+  /* ---------- SECTION SHARED ---------- */
+  section{padding:90px 0;}
+  .section-head{max-width:640px;margin-bottom:56px;}
+  .section-eyebrow{font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:14px;}
+  h2.display{font-family:var(--font-display);font-weight:700;font-size:38px;letter-spacing:-0.5px;margin-bottom:14px;}
+  .section-desc{color:var(--text-1);font-size:16px;}
+
+  /* ---------- HOW IT WORKS ---------- */
+  .how{border-top:1px solid var(--line);}
+  .how-grid{display:flex;}
+  .how-card{background:var(--bg-1);border:1px solid var(--line);border-radius:14px;padding:30px 26px;flex:1;margin-right:24px;min-width:0;}
+  .how-card:last-child{margin-right:0;}
+  .how-card .mark{
+    font-family:var(--font-display);font-weight:800;font-size:13px;color:var(--orange);
+    border:1px solid rgba(255,140,42,0.4);width:34px;height:34px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:20px;
+  }
+  .how-card h3{font-family:var(--font-display);font-weight:600;font-size:18px;margin-bottom:10px;}
+  .how-card p{color:var(--text-1);font-size:14.5px;}
+
+  /* ---------- STORY ---------- */
+  .story{border-top:1px solid var(--line);}
+  .story-grid{display:flex;align-items:center;}
+  .story-grid > .story-quote{flex:0.85;margin-right:64px;min-width:0;}
+  .story-grid > .story-side{flex:1.15;min-width:0;}
+  .story-quote{
+    font-family:var(--font-display);font-weight:600;font-size:24px;line-height:1.4;
+    color:var(--text-0);position:relative;padding-left:24px;border-left:3px solid var(--orange);
+  }
+  .story-quote span{color:var(--orange);}
+  .story-side .label{font-size:12px;letter-spacing:1.5px;color:var(--text-2);text-transform:uppercase;margin-bottom:10px;}
+  .story-side p{color:var(--text-1);font-size:15px;margin-bottom:14px;}
+
+  /* ---------- PRICING ---------- */
+  .pricing{border-top:1px solid var(--line);}
+  .price-grid{display:flex;}
+  .price-card{
+    background:var(--bg-1);border:1px solid var(--line);border-radius:16px;
+    padding:32px 28px;display:flex;flex-direction:column;flex:1;margin-right:22px;min-width:0;
+  }
+  .price-card:last-child{margin-right:0;}
+  .price-card.featured{border-color:var(--orange);background:linear-gradient(160deg,var(--bg-2),var(--bg-1));position:relative;}
+  .price-card.featured::before{
+    content:"MOST POPULAR";position:absolute;top:-12px;left:28px;
+    background:var(--orange);color:#0A0B0D;font-size:10px;font-weight:800;
+    letter-spacing:1px;padding:5px 12px;border-radius:20px;
+  }
+  .price-card h3{font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--text-1);margin-bottom:18px;letter-spacing:0.5px;text-transform:uppercase;}
+  .price-card .amount{font-family:var(--font-display);font-weight:800;font-size:42px;margin-bottom:4px;}
+  .price-card .amount sub{font-family:var(--font-body);font-weight:400;font-size:14px;color:var(--text-2);}
+  .price-card .note{font-size:13px;color:var(--text-2);margin-bottom:24px;}
+  .price-card ul{list-style:none;margin-bottom:28px;flex:1;}
+  .price-card li{font-size:14px;color:var(--text-1);padding:9px 0;border-top:1px solid var(--line);display:flex;}
+  .price-card li:first-child{border-top:none;}
+  .price-card li i{color:var(--green);flex:none;margin-right:10px;}
+  .price-card .btn-secondary, .price-card .btn-primary{justify-content:center;width:100%;}
+
+  /* ---------- FAQ ---------- */
+  .faq{border-top:1px solid var(--line);}
+  .faq-list{max-width:760px;}
+  details{border-bottom:1px solid var(--line);padding:22px 0;}
+  details summary{
+    cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:16px;
+    list-style:none;position:relative;padding-right:36px;
+  }
+  details summary::-webkit-details-marker{display:none;}
+  details summary::after{content:"+";position:absolute;right:0;top:-2px;color:var(--orange);font-size:22px;font-weight:400;transition:transform .2s;}
+  details[open] summary::after{transform:rotate(45deg);}
+  details p{color:var(--text-1);font-size:14.5px;margin-top:14px;max-width:640px;}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:48px 0 36px;}
+  .footer-grid{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:32px;}
+  .footer-links{display:flex;}
+  .footer-links a{font-size:13px;color:var(--text-1);margin-right:28px;}
+  .footer-links a:last-child{margin-right:0;}
+  .footer-links a:hover{color:var(--text-0);}
+  .disclaimer{font-size:12px;color:var(--text-2);line-height:1.6;border-top:1px solid var(--line);padding-top:24px;max-width:900px;}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    .hero-grid, .story-grid{flex-direction:column;}
+    .hero-grid > .hero-left, .story-grid > .story-quote{margin-right:0;margin-bottom:40px;}
+    .how-grid, .price-grid{flex-direction:column;}
+    .how-card, .price-card{margin-right:0;margin-bottom:20px;}
+    .how-card:last-child, .price-card:last-child{margin-bottom:0;}
+    nav.links{display:none;}
+    h1.display{font-size:46px;}
+    .wrap{padding:0 20px;}
+    section{padding:64px 0;}
+  }
+  @media (max-width:560px){
+    .nav{height:auto;flex-wrap:wrap;padding:16px 0;}
+    .brand{margin-bottom:0;}
+    .brand-text .name{font-size:15px;}
+    .brand-text .tag{display:none;}
+    .nav-cta{font-size:12px;padding:9px 16px;margin-left:auto;}
+    .stat-row{flex-direction:column;}
+    .stat-card{margin-right:0;margin-bottom:10px;}
+    .stat-card:last-child{margin-bottom:0;}
+    .stat-card .value{font-size:19px;white-space:nowrap;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="200" height="200" rx="36" fill="#121417"/>
+        <g stroke="#3A3F47" stroke-width="5" stroke-linecap="round">
+          <line x1="100" y1="26" x2="100" y2="36"/>
+          <line x1="100" y1="164" x2="100" y2="174"/>
+          <line x1="26" y1="100" x2="36" y2="100"/>
+          <line x1="164" y1="100" x2="174" y2="100"/>
+        </g>
+        <circle cx="100" cy="100" r="53" fill="none" stroke="#FF8C2A" stroke-width="9"/>
+        <line x1="100" y1="39" x2="100" y2="161" stroke="#F5F6F7" stroke-width="6" stroke-linecap="round"/>
+        <rect x="87" y="74" width="26" height="52" rx="5" fill="#FF8C2A"/>
+        <circle cx="100" cy="100" r="5" fill="#121417"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">MINIMALISTIC<span>TRADER</span></div>
+        <div class="tag">Signal &middot; Target &middot; Discipline</div>
+      </div>
+    </div>
+    <nav class="links">
+      <a href="#how">How It Works</a>
+      <a href="#story">About</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a href="#pricing" class="nav-cta">&#9655;<span>Get Access</span></a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-left">
+      <div class="eyebrow"><span class="dot"></span> 5M &middot; 15M &middot; 20M &middot; 25M &middot; 30M <span class="pipe">|</span> <span class="hot">INVITE-ONLY</span></div>
+      <h1 class="display">MINIMALISTIC<br><span class="line2">TRADER</span></h1>
+      <div class="hero-sub">Two-Tier Breakout Signals &middot; Fixed Target &amp; Stop</div>
+      <p class="hero-desc">A Pine Script v6 indicator built for traders who want clarity, not clutter. <b>A+ and A signals</b>, an automatic target and invalidation level on every entry, and a live weekly scoreboard — right on your chart, no spreadsheet required.</p>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="label">Signal Tiers</div>
+          <div class="value orange">A / A+</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Target &amp; Stop</div>
+          <div class="value">Auto-Set</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Timeframes</div>
+          <div class="value green">5 Built-In</div>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a href="#pricing" class="btn-primary">&#9889;<span>Get Instant Access</span></a>
+        <a href="#how" class="btn-secondary">&#9655;<span>See How It Works</span></a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span>// MINIMALISTIC TRADER &mdash; MNQ &middot; M5 &middot; PINE SCRIPT V6</span>
+        <span class="live"><i class="d"></i>LIVE</span>
+      </div>
+      <div class="chart-box">
+        <div class="mini-table">
+          <div class="row head"><span>THIS WEEK</span><span>RESULT</span></div>
+          <div class="row"><span>Entries</span><span>24</span></div>
+          <div class="row"><span>TP Hit</span><span>20</span></div>
+          <div class="row"><span>SL Hit</span><span>3</span></div>
+        </div>
+
+        <div class="target-line sell" style="top:88px;"></div>
+        <div class="sig-tag plus" style="left:54px;top:96px;">A+ Sell</div>
+
+        <div class="target-line" style="top:222px;"></div>
+        <div class="sig-tag plain buy" style="left:330px;top:186px;">A Buy</div>
+
+        <div class="candles">
+          <div class="candle g" style="height:60px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:90px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:130px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:150px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:110px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:70px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:50px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:40px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:65px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:100px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:140px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:160px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:120px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:175px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:190px;"><div class="wick"></div></div>
+          <div class="candle r" style="height:150px;"><div class="wick"></div></div>
+          <div class="candle g" style="height:185px;"><div class="wick"></div></div>
+        </div>
+      </div>
+      <div class="panel-foot">
+        <div class="key">
+          <span><i style="background:var(--green);"></i>Buy</span>
+          <span><i style="background:var(--red);"></i>Sell</span>
+          <span><i style="background:var(--orange);"></i>A+ Signal</span>
+        </div>
+        <span>Past results vary &middot; not a guarantee</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">How It Works</div>
+      <h2 class="display">Three moving parts. Nothing else.</h2>
+      <p class="section-desc">No 40-input panic. Every decision the indicator makes is visible on your chart, the moment it happens.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="mark">01</div>
+        <h3>A / A+ Signals</h3>
+        <p>Every breakout that clears the trend and momentum filters prints an <b>A Buy/Sell</b>. When it's also moving against the 1-hour trend — a higher-conviction setup — it prints <b>A+</b> instead.</p>
+      </div>
+      <div class="how-card">
+        <div class="mark">02</div>
+        <h3>Target &amp; Invalidation</h3>
+        <p>The moment a signal fires, a target and a stop are calculated from that candle's high or low — no discretion, no moving the goalposts mid-trade.</p>
+      </div>
+      <div class="how-card">
+        <div class="mark">03</div>
+        <h3>Live Scoreboard</h3>
+        <p>Entries, TP hits, SL hits, and your last 3 trade outcomes — updating on your chart in real time. The numbers, not a story about the numbers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="story" id="story">
+  <div class="wrap story-grid">
+    <div class="story-quote">"I didn't get into trading to <span>stare at candles</span> for twelve hours a day. I got into it for freedom — and for years, I had the opposite."</div>
+    <div class="story-side">
+      <div class="label">Why This Exists</div>
+      <p>Started trading in 2020. Lost a lot of money learning the hard way — every phase, every mistake, every emotional exit.</p>
+      <p>Minimalistic Trader is the system built from that — two clean signal tiers, a fixed target and stop on every entry, and an honest scoreboard that doesn't hide the losing weeks.</p>
+      <p>Built by a techie who traded his way through the losses to get here. Not a promise. A tool.</p>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Access</div>
+      <h2 class="display">Pick your commitment.</h2>
+      <p class="section-desc">Invite-only TradingView access, granted to your username within 24 hours of purchase.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card">
+        <h3>Monthly</h3>
+        <div class="amount">$49<sub>/mo</sub></div>
+        <div class="note">Billed monthly, cancel anytime</div>
+        <ul>
+          <li><i>&#10003;</i>Full indicator access</li>
+          <li><i>&#10003;</i>TradingView invite-only script</li>
+          <li><i>&#10003;</i>All future updates</li>
+        </ul>
+        <a href="#" class="btn-secondary">Get Started</a>
+      </div>
+      <div class="price-card featured">
+        <h3>Quarterly</h3>
+        <div class="amount">$129<sub>/3mo</sub></div>
+        <div class="note">~$43/mo &middot; save 12%</div>
+        <ul>
+          <li><i>&#10003;</i>Full indicator access</li>
+          <li><i>&#10003;</i>TradingView invite-only script</li>
+          <li><i>&#10003;</i>All future updates</li>
+          <li><i>&#10003;</i>Priority support</li>
+        </ul>
+        <a href="#" class="btn-primary">Get Started</a>
+      </div>
+      <div class="price-card">
+        <h3>Lifetime</h3>
+        <div class="amount">$399<sub>once</sub></div>
+        <div class="note">One payment, access for life</div>
+        <ul>
+          <li><i>&#10003;</i>Full indicator access</li>
+          <li><i>&#10003;</i>TradingView invite-only script</li>
+          <li><i>&#10003;</i>All future updates, forever</li>
+        </ul>
+        <a href="#" class="btn-secondary">Get Started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">FAQ</div>
+      <h2 class="display">Before you ask.</h2>
+    </div>
+    <div class="faq-list">
+      <details open>
+        <summary>Does this guarantee I'll pass my prop firm evaluation?</summary>
+        <p>No indicator can guarantee that, and we won't pretend otherwise. Minimalistic Trader gives you rule-based, repeatable entries with a defined target and stop — the discipline of sizing and stopping at your number is still on you.</p>
+      </details>
+      <details>
+        <summary>What markets and timeframes does it work on?</summary>
+        <p>Built and tested on MNQ and NDX futures. Signals print on the 5, 15, 20, 25, and 30-minute timeframes.</p>
+      </details>
+      <details>
+        <summary>How do I get access after I subscribe?</summary>
+        <p>You'll be added to the invite-only script on TradingView using your TradingView username — just share it after checkout.</p>
+      </details>
+      <details>
+        <summary>What happens if I cancel?</summary>
+        <p>Your invite-only access is removed at the end of your current billing period. No further charges after that.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="200" height="200" rx="36" fill="#121417"/>
+          <circle cx="100" cy="100" r="53" fill="none" stroke="#FF8C2A" stroke-width="9"/>
+          <line x1="100" y1="39" x2="100" y2="161" stroke="#F5F6F7" stroke-width="6" stroke-linecap="round"/>
+          <rect x="87" y="74" width="26" height="52" rx="5" fill="#FF8C2A"/>
+          <circle cx="100" cy="100" r="5" fill="#121417"/>
+        </svg>
+        <div class="brand-text">
+          <div class="name">MINIMALISTIC<span>TRADER</span></div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="#how">How It Works</a>
+        <a href="#story">About</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+    <div class="disclaimer">
+      Minimalistic Trader is a technical analysis tool, not financial advice. Trading futures involves substantial risk of loss and is not suitable for all investors. Past performance and historical signal accuracy shown on this page and within the indicator are not indicative of future results, and do not guarantee passing any prop trading firm evaluation. Always test thoroughly on a demo or sim account before risking real or evaluation capital.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
