@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backtest Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c0e; --panel:#14171b; --panel2:#181c21; --border:#262b31; --border-soft:#1d2126;
+    --text:#e8eaeb; --text-mid:#a7adb5; --text-dim:#6b727b;
+    --green:#22c55e; --green-dim:#16a34a22;
+    --red:#ef4444; --red-dim:#ef444422;
+    --amber:#f59e0b; --amber-dim:#f59e0b22;
+    --blue:#3b82f6; --blue-dim:#3b82f622;
+    --gold:#eab308; --gold-dim:#eab30822;
+    --accent:#ff8c42; --accent-dim:#ff8c4222;
+    --accentB:#4a9eff; --accentB-dim:#4a9eff22;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;line-height:1.5;padding:32px 24px 80px;}
+  .wrap{max-width:1320px;margin:0 auto;}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em;}
+  .sub{color:var(--text-dim);font-size:14px;margin:0 0 28px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  section{margin-bottom:28px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:760px){.upload-grid{grid-template-columns:1fr;}}
+  .drop{border:2px dashed var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+  .drop:hover,.drop.drag{border-color:var(--accent);background:var(--accent-dim);}
+  .drop.slot-b:hover,.drop.slot-b.drag{border-color:var(--accentB);background:var(--accentB-dim);}
+  .drop .tag{position:absolute;top:10px;left:12px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);}
+  .drop.slot-b .tag{color:var(--accentB);}
+  .drop .icon{font-size:24px;color:var(--text-dim);margin-bottom:8px;margin-top:6px;}
+  .drop .title{font-size:14px;font-weight:500;margin-bottom:4px;}
+  .drop .hint{font-size:12px;color:var(--text-dim);}
+  input[type=file]{display:none;}
+  .filename{font-size:12px;color:var(--text);margin-top:10px;font-family:'JetBrains Mono',monospace;word-break:break-all;}
+  .clear-btn{display:none;margin-top:8px;font-size:11px;color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;cursor:pointer;}
+  .clear-btn:hover{color:var(--red);border-color:var(--red);}
+
+  .cfg-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .cfg-head h2{font-size:15px;font-weight:600;margin:0;}
+  .cfg-head .chev{color:var(--text-dim);font-size:13px;transition:transform .15s;}
+  .cfg-body{display:none;margin-top:18px;}
+  .cfg-body.open{display:block;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+  .field label{display:block;font-size:12px;color:var(--text-mid);margin-bottom:6px;}
+  .field input[type=number],.field input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;}
+  .field input[type=number]:focus,.field input[type=text]:focus{outline:none;border-color:var(--accent);}
+  .toggle-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .toggle-row label{font-size:13px;color:var(--text);cursor:pointer;}
+  .toggle-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;}
+  .subgroup{margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft);}
+  .subgroup .grid{margin-top:10px;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .stat{background:var(--panel2);border-radius:var(--radius);padding:14px 16px;}
+  .stat .label{font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .stat .value{font-size:20px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+  .stat .value.pos{color:var(--green);}
+  .stat .value.neg{color:var(--red);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--text-dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);}
+  td{padding:8px 10px;border-bottom:1px solid var(--border-soft);font-family:'JetBrains Mono',monospace;}
+  tr:hover td{background:var(--panel2);}
+  .scroll{max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);}
+  .scroll table{margin:0;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;letter-spacing:.02em;}
+  .b-fail{background:var(--red-dim);color:var(--red);}
+  .b-breach{background:var(--amber-dim);color:var(--amber);}
+  .b-pass{background:var(--blue-dim);color:var(--blue);}
+  .b-payout{background:var(--gold-dim);color:var(--gold);}
+
+  .section-title{font-size:15px;font-weight:600;margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+  .file-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .file-dot.a{background:var(--accent);}
+  .file-dot.b{background:var(--accentB);}
+  #results,#compareSummary{display:none;}
+  .chart-wrap{position:relative;height:220px;}
+  .empty-note{color:var(--text-dim);font-size:13px;text-align:center;padding:24px;}
+
+  .file-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .file-cols.single{grid-template-columns:1fr;}
+  @media (max-width:900px){.file-cols{grid-template-columns:1fr;}}
+  .file-col{border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--panel);}
+  .file-col.b{border-color:#1e3a5f;}
+  .file-col h3{font-size:13px;font-weight:600;margin:0 0 14px;color:var(--text-mid);display:flex;align-items:center;gap:7px;}
+
+  .cmp-table td:nth-child(2),.cmp-table td:nth-child(3){font-weight:600;}
+  .cmp-win{color:var(--green);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Backtest analyzer</h1>
+  <p class="sub">Upload one or two TradingView Strategy Tester exports. See eval fails, funded breaches, and payouts with exact dates &mdash; compare two strategies side by side under the same account rules.</p>
+
+  <section>
+    <div class="upload-grid">
+      <div class="drop" id="dropA">
+        <span class="tag">Strategy A</span>
+        <div class="icon">&#8593;</div>
+        <div class="title">Drop CSV here</div>
+        <div class="hint">or click to browse</div>
+        <input type="file" id="fileInputA" accept=".csv">
+        <div class="filename" id="fileNameA"></div>
+        <button class="clear-btn" id="clearA">Remove</button>
+      </div>
+      <div class="drop slot-b" id="dropB">
+        <span class="tag">Strategy B <span style="opacity:.6;font-weight:500;">(optional, for comparison)</span></span>
+        <div class="icon">&#8593;</div>
+        <div class="title">Drop CSV here</div>
+        <div class="hint">or click to browse</div>
+        <input type="file" id="fileInputB" accept=".csv">
+        <div class="filename" id="fileNameB"></div>
+        <button class="clear-btn" id="clearB">Remove</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="cfg-head" id="cfgHead">
+      <h2>Account rules</h2>
+      <span class="chev" id="cfgChev">&#9662;</span>
+    </div>
+    <div class="cfg-body" id="cfgBody">
+      <div class="grid">
+        <div class="field"><label>Eval target ($)</label><input type="number" id="evalTarget" value="3000" step="50"></div>
+        <div class="field"><label>Eval max loss ($)</label><input type="number" id="evalMaxLoss" value="2000" step="50"></div>
+        <div class="field"><label>Funded max loss ($)</label><input type="number" id="fundedMaxLoss" value="2000" step="50"></div>
+        <div class="field"><label>Payout threshold ($)</label><input type="number" id="payoutThreshold" value="2000" step="50"></div>
+        <div class="field"><label>Payout value ($)</label><input type="number" id="payoutValue" value="2000" step="50"></div>
+        <div class="field"><label>Eval fee ($)</label><input type="number" id="evalFee" value="95" step="5"></div>
+        <div class="field"><label>Lot override &mdash; A</label><input type="text" id="lotOverrideA" placeholder="blank = use CSV size"></div>
+        <div class="field"><label>Lot override &mdash; B</label><input type="text" id="lotOverrideB" placeholder="blank = use CSV size"></div>
+      </div>
+
+      <div class="subgroup">
+        <div class="toggle-row"><input type="checkbox" id="useTrailingDD" checked><label for="useTrailingDD">Trailing end-of-day drawdown (floor rises with your peak EOD balance, not fixed from start)</label></div>
+      </div>
+
+      <div class="subgroup">
+        <div class="toggle-row"><input type="checkbox" id="usePayoutGate" checked><label for="usePayoutGate">Require qualifying trading days before each payout</label></div>
+        <div class="grid">
+          <div class="field"><label>Min qualifying days</label><input type="number" id="minQualifyingDays" value="5" step="1"></div>
+          <div class="field"><label>Min profit per day ($)</label><input type="number" id="minDayProfit" value="150" step="10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="empty" class="empty-note">Upload a CSV to see the full breakdown. Add a second file to compare two strategies side by side.</div>
+
+  <section class="panel" id="compareSummary">
+    <div class="section-title"><span class="file-dot a"></span><span class="file-dot b"></span>&nbsp;Comparison summary</div>
+    <div class="scroll" style="max-height:none;">
+      <table class="cmp-table">
+        <thead><tr><th>Metric</th><th>A &mdash; <span id="cmpNameA"></span></th><th>B &mdash; <span id="cmpNameB"></span></th></tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="results">
+    <section class="file-cols" id="fileColsContainer"></section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const cfgHead = document.getElementById('cfgHead');
+const cfgBody = document.getElementById('cfgBody');
+const cfgChev = document.getElementById('cfgChev');
+cfgBody.classList.add('open');
+cfgHead.addEventListener('click', () => {
+  cfgBody.classList.toggle('open');
+  cfgChev.style.transform = cfgBody.classList.contains('open') ? 'rotate(0deg)' : 'rotate(-90deg)';
+});
+
+const state = { A: null, B: null };
+const chartInstances = {};
+
+function setupSlot(key) {
+  const drop = document.getElementById('drop' + key);
+  const input = document.getElementById('fileInput' + key);
+  const nameEl = document.getElementById('fileName' + key);
+  const clearBtn = document.getElementById('clear' + key);
+
+  drop.addEventListener('click', e => { if (e.target !== clearBtn) input.click(); });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('drag');
+    if (e.dataTransfer.files.length) loadFile(key, e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', e => { if (e.target.files.length) loadFile(key, e.target.files[0]); });
+  clearBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    state[key] = null;
+    nameEl.textContent = '';
+    clearBtn.style.display = 'none';
+    input.value = '';
+    runAnalysis();
+  });
+}
+setupSlot('A');
+setupSlot('B');
+
+function loadFile(key, file) {
+  document.getElementById('fileName' + key).textContent = file.name;
+  document.getElementById('clear' + key).style.display = 'inline-block';
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: results => {
+      state[key] = { fileName: file.name, rows: results.data };
+      runAnalysis();
+    }
+  });
+}
+
+const cfgIds = ['evalTarget','evalMaxLoss','fundedMaxLoss','payoutThreshold','payoutValue','evalFee','lotOverrideA','lotOverrideB','useTrailingDD','usePayoutGate','minQualifyingDays','minDayProfit'];
+cfgIds.forEach(id => {
+  document.getElementById(id).addEventListener('change', () => runAnalysis());
+});
+
+function getConfig() {
+  return {
+    evalTarget: parseFloat(document.getElementById('evalTarget').value) || 0,
+    evalMaxLoss: parseFloat(document.getElementById('evalMaxLoss').value) || 0,
+    fundedMaxLoss: parseFloat(document.getElementById('fundedMaxLoss').value) || 0,
+    payoutThreshold: parseFloat(document.getElementById('payoutThreshold').value) || 0,
+    payoutValue: parseFloat(document.getElementById('payoutValue').value) || 0,
+    evalFee: parseFloat(document.getElementById('evalFee').value) || 0,
+    lotOverrideA: parseFloat(document.getElementById('lotOverrideA').value) || null,
+    lotOverrideB: parseFloat(document.getElementById('lotOverrideB').value) || null,
+    useTrailingDD: document.getElementById('useTrailingDD').checked,
+    usePayoutGate: document.getElementById('usePayoutGate').checked,
+    minQualifyingDays: parseInt(document.getElementById('minQualifyingDays').value) || 0,
+    minDayProfit: parseFloat(document.getElementById('minDayProfit').value) || 0
+  };
+}
+
+function fmtDate(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function buildTrades(rows) {
+  const entries = {}, exits = {};
+  rows.forEach(r => {
+    const tn = r['Trade number'];
+    const type = r['Type'];
+    if (!tn || !type) return;
+    if (type.startsWith('Entry')) {
+      entries[tn] = { entryTime: r['Date and time'], entrySignal: r['Signal'] || '' };
+    } else if (type.startsWith('Exit')) {
+      exits[tn] = { exitTime: r['Date and time'], netPnl: parseFloat(r['Net PnL USD']), qty: parseFloat(r['Size (qty)']) || 1 };
+    }
+  });
+  const trades = [];
+  Object.keys(entries).forEach(tn => {
+    if (!exits[tn]) return;
+    const e = entries[tn], x = exits[tn];
+    if (isNaN(x.netPnl)) return;
+    const exitTime = new Date(x.exitTime);
+    const entryTime = new Date(e.entryTime);
+    const direction = e.entrySignal.includes('Long') ? 'Long' : 'Short';
+    trades.push({
+      tradeNumber: tn, direction, entryTime, exitTime,
+      netPnl: x.netPnl, qty: x.qty,
+      pnlPerLot: x.netPnl / x.qty,
+      win: x.netPnl > 0,
+      exitDateStr: fmtDate(exitTime),
+      dayOfWeek: exitTime.toLocaleDateString('en-US', { weekday: 'long' }),
+      monthKey: `${exitTime.getFullYear()}-${String(exitTime.getMonth()+1).padStart(2,'0')}`
+    });
+  });
+  trades.sort((a,b) => a.entryTime - b.entryTime);
+  return trades;
+}
+
+function simulate(trades, lots, cfg) {
+  let phase = 'eval', equity = 0, peakEod = 0, qualifyingDays = 0, dayPnlAccum = 0, currentDate = null, attempt = 1;
+  const events = [];
+  const equityCurve = [];
+  function reset() { equity = 0; peakEod = 0; qualifyingDays = 0; dayPnlAccum = 0; }
+
+  trades.forEach(t => {
+    const d = t.exitDateStr;
+    if (currentDate !== null && d !== currentDate) {
+      peakEod = Math.max(peakEod, equity);
+      if (phase === 'funded' && dayPnlAccum > cfg.minDayProfit) qualifyingDays++;
+      dayPnlAccum = 0;
+      const gateOk = !cfg.usePayoutGate || qualifyingDays >= cfg.minQualifyingDays;
+      if (phase === 'funded' && equity >= cfg.payoutThreshold && gateOk) {
+        events.push({ date: currentDate, event: 'PAYOUT', equity: Math.round(equity), attempt });
+        reset();
+      }
+    }
+    currentDate = d;
+    equity += t.pnlPerLot * lots;
+    dayPnlAccum += t.pnlPerLot * lots;
+    equityCurve.push({ date: d, equity });
+
+    if (phase === 'eval') {
+      const floor = cfg.useTrailingDD ? (peakEod - cfg.evalMaxLoss) : -cfg.evalMaxLoss;
+      if (equity <= floor) {
+        events.push({ date: d, event: 'EVAL FAIL', equity: Math.round(equity), attempt });
+        reset(); attempt++;
+      } else if (equity >= cfg.evalTarget) {
+        events.push({ date: d, event: 'EVAL PASS', equity: Math.round(equity), attempt });
+        reset(); phase = 'funded';
+      }
+    } else if (phase === 'funded') {
+      const floor = cfg.useTrailingDD ? (peakEod - cfg.fundedMaxLoss) : -cfg.fundedMaxLoss;
+      if (equity <= floor) {
+        events.push({ date: d, event: 'BREACH', equity: Math.round(equity), attempt });
+        reset(); phase = 'eval'; attempt++;
+      }
+    }
+  });
+  peakEod = Math.max(peakEod, equity);
+  if (phase === 'funded' && dayPnlAccum > cfg.minDayProfit) qualifyingDays++;
+  const gateOk = !cfg.usePayoutGate || qualifyingDays >= cfg.minQualifyingDays;
+  if (phase === 'funded' && equity >= cfg.payoutThreshold && gateOk) {
+    events.push({ date: currentDate, event: 'PAYOUT', equity: Math.round(equity), attempt });
+  }
+  return { events, finalPhase: phase, equityCurve };
+}
+
+function computeStreaks(trades) {
+  let maxWin = 0, maxLoss = 0, curWin = 0, curLoss = 0;
+  trades.forEach(t => {
+    if (t.win) { curWin++; curLoss = 0; } else { curLoss++; curWin = 0; }
+    maxWin = Math.max(maxWin, curWin);
+    maxLoss = Math.max(maxLoss, curLoss);
+  });
+  return { maxWin, maxLoss };
+}
+
+function fmtMoney(v) {
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(Math.round(v)).toLocaleString();
+}
+
+function stat(label, value, positive) {
+  let cls = '';
+  if (positive === true) cls = 'pos';
+  if (positive === false) cls = 'neg';
+  return `<div class="stat"><div class="label">${label}</div><div class="value ${cls}">${value}</div></div>`;
+}
+
+function badge(event) {
+  const map = { 'EVAL FAIL': 'b-fail', 'BREACH': 'b-breach', 'EVAL PASS': 'b-pass', 'PAYOUT': 'b-payout' };
+  return `<span class="badge ${map[event]||''}">${event}</span>`;
+}
+
+function processDataset(rows, cfg, lotOverride) {
+  const trades = buildTrades(rows);
+  if (!trades.length) return null;
+  const dataQty = trades[0].qty || 1;
+  const lots = lotOverride || dataQty;
+
+  const totalTrades = trades.length;
+  const wins = trades.filter(t => t.win).length;
+  const winRate = (wins / totalTrades) * 100;
+  const netPnl = trades.reduce((s,t) => s + t.netPnl, 0);
+  const grossWin = trades.filter(t => t.win).reduce((s,t) => s + t.netPnl, 0);
+  const grossLoss = Math.abs(trades.filter(t => !t.win).reduce((s,t) => s + t.netPnl, 0));
+  const profitFactor = grossLoss > 0 ? grossWin / grossLoss : Infinity;
+
+  let cum = 0, peak = 0, maxDD = 0;
+  trades.forEach(t => { cum += t.netPnl; peak = Math.max(peak, cum); maxDD = Math.min(maxDD, cum - peak); });
+  const streaks = computeStreaks(trades);
+
+  const sim = simulate(trades, lots, cfg);
+  const evalFails = sim.events.filter(e => e.event === 'EVAL FAIL').length;
+  const breaches = sim.events.filter(e => e.event === 'BREACH').length;
+  const payouts = sim.events.filter(e => e.event === 'PAYOUT').length;
+  const attempts = 1 + evalFails + breaches;
+  const spend = attempts * cfg.evalFee;
+  const income = payouts * cfg.payoutValue;
+  const simNet = income - spend;
+
+  const monthly = {};
+  trades.forEach(t => {
+    if (!monthly[t.monthKey]) monthly[t.monthKey] = { trades: 0, wins: 0, net: 0 };
+    monthly[t.monthKey].trades++;
+    if (t.win) monthly[t.monthKey].wins++;
+    monthly[t.monthKey].net += t.netPnl;
+  });
+
+  const dow = {};
+  trades.forEach(t => {
+    if (!dow[t.dayOfWeek]) dow[t.dayOfWeek] = { trades: 0, wins: 0, net: 0 };
+    dow[t.dayOfWeek].trades++;
+    if (t.win) dow[t.dayOfWeek].wins++;
+    dow[t.dayOfWeek].net += t.netPnl;
+  });
+
+  return {
+    trades, lots, totalTrades, winRate, netPnl, profitFactor, maxDD, streaks,
+    sim, evalFails, breaches, payouts, attempts, spend, income, simNet,
+    monthly, dow
+  };
+}
+
+function runAnalysis() {
+  if (!state.A && !state.B) {
+    document.getElementById('empty').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('compareSummary').style.display = 'none';
+    return;
+  }
+  const cfg = getConfig();
+  const resA = state.A ? processDataset(state.A.rows, cfg, cfg.lotOverrideA) : null;
+  const resB = state.B ? processDataset(state.B.rows, cfg, cfg.lotOverrideB) : null;
+
+  if (!resA && !resB) { alert('Could not find valid trade rows in the uploaded CSV(s).'); return; }
+
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const container = document.getElementById('fileColsContainer');
+  container.className = 'file-cols' + (resA && resB ? '' : ' single');
+  container.innerHTML = '';
+
+  if (resA) container.appendChild(buildFileColumn('A', state.A.fileName, resA));
+  if (resB) container.appendChild(buildFileColumn('B', state.B.fileName, resB));
+
+  if (resA) drawEquityChart('A', resA.sim.equityCurve, resA.sim.events);
+  if (resB) drawEquityChart('B', resB.sim.equityCurve, resB.sim.events);
+
+  if (resA && resB) {
+    renderComparison(state.A.fileName, state.B.fileName, resA, resB);
+  } else {
+    document.getElementById('compareSummary').style.display = 'none';
+  }
+}
+
+function buildFileColumn(key, fileName, res) {
+  const col = document.createElement('div');
+  col.className = 'file-col' + (key === 'B' ? ' b' : '');
+  col.innerHTML = `
+    <h3><span class="file-dot ${key.toLowerCase()}"></span>${escapeHtml(fileName)}</h3>
+
+    <div class="section-title" style="font-size:13px;">Overview</div>
+    <div class="stat-grid" style="margin-bottom:20px;">
+      ${stat('Trades', res.totalTrades)}
+      ${stat('Win rate', res.winRate.toFixed(1)+'%')}
+      ${stat('Net P&L', fmtMoney(res.netPnl), res.netPnl>=0)}
+      ${stat('Profit factor', isFinite(res.profitFactor) ? res.profitFactor.toFixed(2) : '&#8734;')}
+      ${stat('Max drawdown', fmtMoney(res.maxDD), false)}
+      ${stat('Max win streak', res.streaks.maxWin)}
+      ${stat('Max loss streak', res.streaks.maxLoss)}
+      ${stat('Lots used', res.lots)}
+    </div>
+
+    <div class="section-title" style="font-size:13px;">Account simulation</div>
+    <div class="stat-grid" style="margin-bottom:20px;">
+      ${stat('Eval attempts', res.attempts)}
+      ${stat('Eval fails', res.evalFails)}
+      ${stat('Funded breaches', res.breaches)}
+      ${stat('Payouts', res.payouts)}
+      ${stat('Eval spend', fmtMoney(-res.spend), false)}
+      ${stat('Payout income', fmtMoney(res.income), true)}
+      ${stat('Net result', fmtMoney(res.simNet), res.simNet>=0)}
+      ${stat('Ending status', res.sim.finalPhase === 'funded' ? 'Funded' : 'In eval')}
+    </div>
+
+    <div class="section-title" style="font-size:13px;">Equity curve</div>
+    <div class="chart-wrap" style="margin-bottom:20px;"><canvas id="equityChart${key}"></canvas></div>
+
+    <div class="section-title" style="font-size:13px;">Event log</div>
+    <div class="scroll" style="margin-bottom:20px;">
+      <table>
+        <thead><tr><th>Date</th><th>Event</th><th>Equity</th><th>Att.</th></tr></thead>
+        <tbody>${renderEventRows(res.sim.events)}</tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="font-size:13px;">Monthly</div>
+    <div class="scroll" style="max-height:240px;margin-bottom:20px;">
+      <table><thead><tr><th>Month</th><th>Trades</th><th>Win%</th><th>Net</th></tr></thead><tbody>${renderMonthlyRows(res.monthly)}</tbody></table>
+    </div>
+
+    <div class="section-title" style="font-size:13px;">Day of week</div>
+    <div class="scroll" style="max-height:220px;">
+      <table><thead><tr><th>Day</th><th>Trades</th><th>Win%</th><th>Net</th></tr></thead><tbody>${renderDowRows(res.dow)}</tbody></table>
+    </div>
+  `;
+  return col;
+}
+
+function renderEventRows(events) {
+  if (!events.length) return '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);">No events at this size &mdash; try increasing lot size.</td></tr>';
+  return events.map(e => `
+    <tr>
+      <td>${e.date}</td>
+      <td>${badge(e.event)}</td>
+      <td style="color:${e.equity>=0?'var(--green)':'var(--red)'}">${fmtMoney(e.equity)}</td>
+      <td>#${e.attempt}</td>
+    </tr>`).join('');
+}
+
+function renderMonthlyRows(monthly) {
+  const keys = Object.keys(monthly).sort();
+  return keys.map(k => {
+    const m = monthly[k];
+    const wr = (m.wins/m.trades*100).toFixed(1);
+    return `<tr><td>${k}</td><td>${m.trades}</td><td>${wr}%</td><td style="color:${m.net>=0?'var(--green)':'var(--red)'}">${fmtMoney(m.net)}</td></tr>`;
+  }).join('');
+}
+
+function renderDowRows(dow) {
+  const dowOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  return dowOrder.filter(d => dow[d]).map(d => {
+    const m = dow[d];
+    const wr = (m.wins/m.trades*100).toFixed(1);
+    return `<tr><td>${d}</td><td>${m.trades}</td><td>${wr}%</td><td style="color:${m.net>=0?'var(--green)':'var(--red)'}">${fmtMoney(m.net)}</td></tr>`;
+  }).join('');
+}
+
+function renderComparison(nameA, nameB, resA, resB) {
+  document.getElementById('compareSummary').style.display = 'block';
+  document.getElementById('cmpNameA').textContent = nameA;
+  document.getElementById('cmpNameB').textContent = nameB;
+
+  const rows = [
+    ['Trades', resA.totalTrades, resB.totalTrades, 'higher'],
+    ['Win rate', resA.winRate.toFixed(1)+'%', resB.winRate.toFixed(1)+'%', 'higher-num'],
+    ['Net P&L', fmtMoney(resA.netPnl), fmtMoney(resB.netPnl), 'higher-num'],
+    ['Profit factor', isFinite(resA.profitFactor)?resA.profitFactor.toFixed(2):'&#8734;', isFinite(resB.profitFactor)?resB.profitFactor.toFixed(2):'&#8734;', 'higher-num'],
+    ['Max drawdown', fmtMoney(resA.maxDD), fmtMoney(resB.maxDD), 'closer-zero'],
+    ['Max loss streak', resA.streaks.maxLoss, resB.streaks.maxLoss, 'lower'],
+    ['Eval attempts', resA.attempts, resB.attempts, 'lower'],
+    ['Funded breaches', resA.breaches, resB.breaches, 'lower'],
+    ['Payouts', resA.payouts, resB.payouts, 'higher'],
+    ['Net (incl. fees/payouts)', fmtMoney(resA.simNet), fmtMoney(resB.simNet), 'higher-num'],
+  ];
+
+  document.getElementById('cmpBody').innerHTML = rows.map(([label, a, b, rule]) => {
+    const { aWin, bWin } = compareValues(a, b, rule);
+    return `<tr>
+      <td>${label}</td>
+      <td class="${aWin?'cmp-win':''}">${a}</td>
+      <td class="${bWin?'cmp-win':''}">${b}</td>
+    </tr>`;
+  }).join('');
+}
+
+function parseNum(v) {
+  if (typeof v === 'number') return v;
+  return parseFloat(String(v).replace(/[$,%]/g,'')) || 0;
+}
+
+function compareValues(a, b, rule) {
+  const av = parseNum(a), bv = parseNum(b);
+  if (rule === 'higher' || rule === 'higher-num') return { aWin: av > bv, bWin: bv > av };
+  if (rule === 'lower') return { aWin: av < bv, bWin: bv < av };
+  if (rule === 'closer-zero') return { aWin: Math.abs(av) < Math.abs(bv), bWin: Math.abs(bv) < Math.abs(av) };
+  return { aWin: false, bWin: false };
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function drawEquityChart(key, curve, events) {
+  const canvas = document.getElementById('equityChart' + key);
+  if (!canvas) return;
+  if (chartInstances[key]) chartInstances[key].destroy();
+  const labels = curve.map(p => p.date);
+  const data = curve.map(p => p.equity);
+
+  const eventByDate = {};
+  events.forEach(e => { eventByDate[e.date] = e.event; });
+  const colorMap = { 'EVAL FAIL': '#ef4444', 'BREACH': '#f59e0b', 'EVAL PASS': '#3b82f6', 'PAYOUT': '#eab308' };
+  const pointColors = labels.map(d => eventByDate[d] ? colorMap[eventByDate[d]] : 'transparent');
+  const pointRadii = labels.map(d => eventByDate[d] ? 5 : 0);
+  const lineColor = key === 'B' ? '#4a9eff' : '#ff8c42';
+
+  chartInstances[key] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: lineColor,
+        borderWidth: 1.5,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: '#0a0c0e',
+        pointBorderWidth: 1.5,
+        pointRadius: pointRadii,
+        pointHoverRadius: 6,
+        tension: 0,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.label;
+              const ev = eventByDate[d];
+              const base = 'Equity: ' + fmtMoney(ctx.parsed.y);
+              return ev ? base + ' \u2014 ' + ev : base;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#6b727b', font: { size: 10 } }, grid: { color: '#1d2126' } },
+        y: { ticks: { color: '#6b727b', font: { size: 10 }, callback: v => fmtMoney(v) }, grid: { color: '#1d2126' } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
